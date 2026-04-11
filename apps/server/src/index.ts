@@ -1,11 +1,15 @@
-import Fastify from 'fastify';
-import cors from '@fastify/cors';
-import { Server } from 'socket.io';
 import { config } from 'dotenv';
-import { chat, chatStream } from './services/llm.js';
-import type { ChatMessage } from './services/llm.js';
 
+// dotenv 必须在所有其他 import 之前加载
 config();
+
+const { default: Fastify } = await import('fastify');
+const { default: cors } = await import('@fastify/cors');
+const { Server } = await import('socket.io');
+const { chatStream } = await import('./services/llm.js');
+const { default: fs } = await import('fs');
+
+import type { ChatMessage } from './services/llm.js';
 
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const LLM_KEY = process.env.LLM_API_KEY || '';
@@ -27,7 +31,7 @@ async function main() {
   fastify.get('/api/health', async () => ({
     status: 'ok',
     service: 'uli-server',
-    llm: LLM_KEY ? 'configured' : 'no-key (mock mode)',
+    llm: LLM_KEY ? `configured (${process.env.LLM_MODEL})` : 'no-key (mock mode)',
   }));
 
   // Socket.io
@@ -62,7 +66,7 @@ async function main() {
       }
     });
 
-    // 接收文本消息（开发阶段先用文本，后续接语音 STT 后自动转文本）
+    // 接收文本消息
     socket.on('text', async (data: { text: string }) => {
       const ctx = sessionContexts.get(socket.id);
       if (!ctx) return;
@@ -104,6 +108,8 @@ async function main() {
           fullReply += chunk;
         }
 
+        console.log(`[llm] Q: ${data.text} | A: ${fullReply.slice(0, 50)}...`);
+
         ctx.messages.push({ role: 'assistant', content: fullReply });
 
         socket.emit('audio', {
@@ -123,10 +129,7 @@ async function main() {
 
     // 接收语音（后续接讯飞 STT）
     socket.on('audio', async (data: { data: string }) => {
-      // TODO: 讯飞 STT 转文字后，走 text 的逻辑
-      // 目前语音输入也走 mock
       socket.emit('thinking', { animation: 'uli_think' });
-
       await new Promise((r) => setTimeout(r, 1000));
       socket.emit('audio', {
         data: '',
@@ -155,7 +158,6 @@ async function main() {
       socket.emit('session_ended', { goodbye });
 
       // TODO: 保存 session 到数据库，生成摘要
-      // 清理上下文
       sessionContexts.delete(socket.id);
     });
 
@@ -168,9 +170,7 @@ async function main() {
   try {
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
     console.log(`[uli-server] running on http://localhost:${PORT}`);
-    if (!LLM_KEY) {
-      console.log('[uli-server] ⚠️  no LLM_API_KEY set, running in mock mode');
-    }
+    console.log(`[uli-server] LLM: ${LLM_KEY ? process.env.LLM_MODEL : 'mock mode'}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
