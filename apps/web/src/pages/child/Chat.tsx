@@ -23,12 +23,25 @@ export function ChildChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const socket: TypedSocket = io('/', {
-      transports: ['websocket'],
+    const socket: TypedSocket = io({
+      transports: ['polling', 'websocket'],
+      path: '/socket.io',
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
     });
 
-    socket.on('connect', () => setConnected(true));
-    socket.on('disconnect', () => setConnected(false));
+    socket.on('connect', () => {
+      console.log('[socket] connected');
+      setConnected(true);
+    });
+    socket.on('disconnect', () => {
+      console.log('[socket] disconnected');
+      setConnected(false);
+    });
+    socket.on('connect_error', (err) => {
+      console.error('[socket] connection error:', err.message);
+    });
 
     socket.on('thinking', () => {
       setUliAnimation('uli_think');
