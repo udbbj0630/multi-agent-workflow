@@ -1,0 +1,26 @@
+{
+  "name": "uli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "呜哩 (Uli) - 3-8岁儿童AI伙伴 · 4C能力成长追踪系统",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "dev:web": "turbo dev --filter=@uli/web",
+    "dev:server": "turbo dev --filter=@uli/server",
+    "build:web": "turbo build --filter=@uli/web",
+    "build:server": "turbo build --filter=@uli/server",
+    "db:migrate": "turbo db:migrate --filter=@uli/server",
+    "lint": "turbo lint",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  },
+  "packageManager": "npm@11.12.1"
+}

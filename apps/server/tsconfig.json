@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@uli/shared": ["../../packages/shared/src"],
+      "@uli/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "../../packages/shared" }]
+}
