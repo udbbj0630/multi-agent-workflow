@@ -15,7 +15,7 @@ const client = new OpenAI({
   },
 });
 
-const MODEL = process.env.LLM_MODEL || 'deepseek/deepseek-chat-v3-0324:free';
+const MODEL = process.env.LLM_MODEL || 'deepseek/deepseek-chat-v3-0324';
 
 // 加载呜哩人格 prompt
 let personalityPrompt = '';

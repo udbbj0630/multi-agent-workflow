@@ -94,6 +94,7 @@ export function ChildChat() {
   }, [textInput]);
 
   const startRecording = async () => {
+    if (!sessionActive) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -199,6 +200,21 @@ export function ChildChat() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* 录音指示器 */}
+      {isRecording && (
+        <div style={{
+          padding: '8px 16px', background: '#FFEBEE',
+          textAlign: 'center', color: '#D32F2F', fontSize: 14,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>
+          <span style={{
+            width: 10, height: 10, borderRadius: '50%', background: '#F44336',
+            animation: 'pulse 1s infinite',
+          }} />
+          正在录音...松开发送
+        </div>
+      )}
+
       {/* 底部控制区 */}
       <div style={{
         padding: '12px 16px', background: 'white',
@@ -252,6 +268,7 @@ export function ChildChat() {
             width: 44, height: 44, borderRadius: '50%', border: 'none',
             background: isRecording ? '#FF5252' : sessionActive ? '#E3F2FD' : '#eee',
             fontSize: 20, cursor: sessionActive ? 'pointer' : 'not-allowed',
+            transition: 'background 0.2s',
           }}
         >
           🎤
