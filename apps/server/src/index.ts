@@ -105,6 +105,63 @@ async function main() {
     path: '/socket.io',
   });
 
+  // ============ session 结束时保存数据的逻辑 ============
+
+  async function finalizeSession(socketId: string) {
+    const ctx = sessionContexts.get(socketId);
+    if (!ctx || !ctx.sessionId || !ctx.childId || ctx.childTexts.length === 0) {
+      sessionContexts.delete(socketId);
+      return;
+    }
+
+    // 1. 标记 session 结束
+    store.endSession(ctx.sessionId);
+
+    // 2. 4C 测评
+    const assessment = assessSession(ctx.childTexts);
+    store.saveSessionScore(ctx.sessionId, ctx.childId, assessment);
+    console.log(`[assessment] C:${assessment.creativity} CT:${assessment.criticalThinking} CM:${assessment.communication} CB:${assessment.collaboration} | ${assessment.detectedSignals.join(', ')}`);
+
+    // 3. 里程碑检查
+    const baselines = store.getBaselines(ctx.childId);
+    for (const bl of baselines) {
+      if (bl.currentScore >= 80 && bl.sessionCount <= 1) {
+        store.addMilestone(ctx.childId, bl.dimension, 'first_80', `${DIM_NAMES[bl.dimension] || bl.dimension}首次突破80分！`);
+      }
+      if (bl.trend === 'rising' && bl.sessionCount >= 3) {
+        store.addMilestone(ctx.childId, bl.dimension, 'trend_rising', `${DIM_NAMES[bl.dimension] || bl.dimension}持续上升中！`);
+      }
+    }
+
+    // 4. 提取记忆
+    if (LLM_KEY) {
+      try {
+        const existingMemories = store.getMemories(ctx.childId).map((m) => `${m.key}:${m.value}`);
+        const allTurns = store.getTurnsBySession(ctx.sessionId);
+        const newMemories = await extractMemories(
+          allTurns.map((t) => ({ role: t.role, text: t.text })),
+          existingMemories,
+        );
+        for (const mem of newMemories) {
+          store.saveMemory(ctx.childId, mem.category as any, mem.key, mem.value);
+        }
+        if (newMemories.length > 0) {
+          console.log(`[memory] extracted ${newMemories.length}: ${newMemories.map((m) => m.value).join(', ')}`);
+        }
+      } catch (err) {
+        console.error('[memory] extraction failed:', err);
+      }
+    }
+
+    console.log(`[session] finalized: ${ctx.sessionId} | turns=${ctx.childTexts.length} | child=${ctx.childName}`);
+    sessionContexts.delete(socketId);
+  }
+
+  const DIM_NAMES: Record<string, string> = {
+    creativity: '创造力', critical_thinking: '批判性思维',
+    communication: '沟通力', collaboration: '协作力',
+  };
+
   io.on('connection', (socket) => {
     console.log(`[socket] connected: ${socket.id}`);
     sessionContexts.set(socket.id, { messages: [], childTexts: [] });
@@ -227,58 +284,18 @@ async function main() {
       if (!ctx) return;
 
       const childName = ctx.childName || '小朋友';
-      const goodbye = `今天和${childName}聊得好开心呀！下次再来找呜哩玩哦！拜拜～`;
-      socket.emit('session_ended', { goodbye });
+      socket.emit('session_ended', {
+        goodbye: `今天和${childName}聊得好开心呀！下次再来找呜哩玩哦！拜拜～`,
+      });
 
-      // === session 结束处理 ===
-
-      if (ctx.sessionId && ctx.childId && ctx.childTexts.length > 0) {
-        // 1. 保存结束状态
-        store.endSession(ctx.sessionId);
-
-        // 2. 4C 测评
-        const assessment = assessSession(ctx.childTexts);
-        store.saveSessionScore(ctx.sessionId, ctx.childId, assessment);
-        console.log(`[assessment] C:${assessment.creativity} CT:${assessment.criticalThinking} CM:${assessment.communication} CB:${assessment.collaboration} | signals: ${assessment.detectedSignals.join(', ')}`);
-
-        // 3. 检查里程碑
-        const baselines = store.getBaselines(ctx.childId);
-        for (const bl of baselines) {
-          if (bl.currentScore >= 80 && bl.sessionCount === 1) {
-            store.addMilestone(ctx.childId, bl.dimension, 'first_80', `${bl.dimension}首次突破80分！`);
-          }
-          if (bl.trend === 'rising' && bl.sessionCount >= 3) {
-            store.addMilestone(ctx.childId, bl.dimension, 'trend_rising', `${bl.dimension}持续上升中！`);
-          }
-        }
-
-        // 4. 提取记忆（异步，不阻塞）
-        if (LLM_KEY) {
-          try {
-            const existingMemories = store.getMemories(ctx.childId).map((m) => `${m.key}:${m.value}`);
-            const allTurns = store.getTurnsBySession(ctx.sessionId);
-            const newMemories = await extractMemories(
-              allTurns.map((t) => ({ role: t.role, text: t.text })),
-              existingMemories,
-            );
-            for (const mem of newMemories) {
-              store.saveMemory(ctx.childId, mem.category as any, mem.key, mem.value);
-            }
-            if (newMemories.length > 0) {
-              console.log(`[memory] extracted ${newMemories.length} new memories`);
-            }
-          } catch (err) {
-            console.error('[memory] extraction failed:', err);
-          }
-        }
-      }
-
-      sessionContexts.delete(socket.id);
+      // 保存所有数据
+      await finalizeSession(socket.id);
     });
 
     socket.on('disconnect', () => {
       console.log(`[socket] disconnected: ${socket.id}`);
-      sessionContexts.delete(socket.id);
+      // 关页面也要保存！
+      finalizeSession(socket.id);
     });
   });
 
