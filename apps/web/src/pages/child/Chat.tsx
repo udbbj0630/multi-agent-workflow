@@ -9,6 +9,14 @@ interface ChatMessage {
   text: string;
 }
 
+// Web Speech API 类型声明
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
 export function ChildChat() {
   const [connected, setConnected] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
@@ -19,8 +27,8 @@ export function ChildChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const socketRef = useRef<TypedSocket | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     const socket: TypedSocket = io({
@@ -85,45 +93,72 @@ export function ChildChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendText = useCallback(() => {
-    const text = textInput.trim();
-    if (!text || !socketRef.current) return;
-    socketRef.current.emit('text', { text });
+  const sendText = useCallback((text?: string) => {
+    const msg = text || textInput.trim();
+    if (!msg || !socketRef.current) return;
+    socketRef.current.emit('text', { text: msg });
     setTextInput('');
-    setMessages((prev) => [...prev, { role: 'child', text }]);
+    setMessages((prev) => [...prev, { role: 'child', text: msg }]);
   }, [textInput]);
 
-  const startRecording = async () => {
+  // 语音识别：用浏览器 Web Speech API（Chrome/Safari 支持）
+  const startRecording = useCallback(() => {
     if (!sessionActive) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      const chunks: BlobPart[] = [];
 
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          socketRef.current?.emit('audio', { data: base64 });
-        };
-        reader.readAsDataURL(blob);
-        stream.getTracks().forEach((t) => t.stop());
-      };
-
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch {
-      console.error('无法获取麦克风');
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('你的浏览器不支持语音识别，请用 Chrome 或 Safari 试试');
+      return;
     }
-  };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'zh-CN';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    let finalTranscript = '';
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+      // 实时显示正在说的话
+      if (interim || finalTranscript) {
+        setTextInput(finalTranscript + interim);
+      }
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('[speech] error:', event.error);
+      setIsRecording(false);
+      if (event.error === 'not-allowed') {
+        alert('请允许浏览器使用麦克风');
+      }
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      // 识别结束后自动发送
+      if (finalTranscript.trim()) {
+        sendText(finalTranscript.trim());
+      }
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  }, [sessionActive, sendText]);
+
+  const stopRecording = useCallback(() => {
+    recognitionRef.current?.stop();
     setIsRecording(false);
-  };
+  }, []);
 
   const toggleSession = () => {
     const socket = socketRef.current;
@@ -211,7 +246,7 @@ export function ChildChat() {
             width: 10, height: 10, borderRadius: '50%', background: '#F44336',
             animation: 'pulse 1s infinite',
           }} />
-          正在录音...松开发送
+          正在听你说话...说完了点一下停止
         </div>
       )}
 
@@ -237,7 +272,7 @@ export function ChildChat() {
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendText()}
-          placeholder={sessionActive ? '打字和呜哩聊天...' : ''}
+          placeholder={sessionActive ? '打字或按麦克风说话...' : ''}
           disabled={!sessionActive}
           style={{
             flex: 1, padding: '8px 12px', borderRadius: 20,
@@ -259,10 +294,7 @@ export function ChildChat() {
         </button>
 
         <button
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
+          onClick={isRecording ? stopRecording : startRecording}
           disabled={!sessionActive}
           style={{
             width: 44, height: 44, borderRadius: '50%', border: 'none',
