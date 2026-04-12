@@ -11,6 +11,9 @@ const { chatStream, extractMemories } = await import('./services/llm.js');
 import type { ChatMessage } from './services/llm.js';
 import * as store from './services/store.js';
 import { assessSession } from './services/assessment.js';
+import { createToken, verifyToken } from './services/auth.js';
+import { getKnowledgeBoundary, detectConcept } from './services/knowledge.js';
+import bcrypt from 'bcryptjs';
 
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const LLM_KEY = process.env.LLM_API_KEY || '';
@@ -47,6 +50,54 @@ async function main() {
     child: DEMO_CHILD,
     parentId: DEMO_PARENT.id,
   }));
+
+  // ============ 认证 API ============
+
+  // 注册
+  fastify.post('/api/auth/register', async (req: any) => {
+    const { phone, password, nickname, childName, childBirth } = req.body || {};
+
+    if (!phone || phone.length !== 11) return { error: '请输入11位手机号' };
+    if (!password || password.length < 4) return { error: '密码至少4位' };
+    if (!childName) return { error: '请输入孩子名字' };
+    if (!childBirth) return { error: '请输入孩子出生日期' };
+
+    const existing = store.findParentByPhone(phone);
+    if (existing) return { error: '该手机号已注册' };
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const parent = store.createParent({ phone, passwordHash, nickname });
+    const child = store.createChild({
+      parentId: parent.id,
+      nickname: childName,
+      birthDate: childBirth,
+    });
+
+    const token = createToken(parent.id);
+    console.log(`[auth] registered: ${phone} → child: ${child.nickname}`);
+    return { token, parentId: parent.id, childId: child.id };
+  });
+
+  // 登录
+  fastify.post('/api/auth/login', async (req: any) => {
+    const { phone, password } = req.body || {};
+    if (!phone || !password) return { error: '请输入手机号和密码' };
+
+    const parent = store.findParentByPhone(phone);
+    if (!parent) return { error: '账号不存在' };
+
+    const match = await bcrypt.compare(password, parent.passwordHash);
+    if (!match) return { error: '密码错误' };
+
+    const token = createToken(parent.id);
+    console.log(`[auth] login: ${phone}`);
+    return { token, parentId: parent.id };
+  });
+
+  // 获取家长的孩子列表
+  fastify.get('/api/parents/:parentId/children', async (req: any) => {
+    return { children: store.getChildrenByParent(req.params.parentId) };
+  });
 
   // 家长端：获取孩子基线
   fastify.get('/api/children/:childId/baseline', async (req: any) => {
@@ -232,14 +283,20 @@ async function main() {
         ctx.messages.push({ role: 'user', content: data.text });
         const recentMessages = ctx.messages.slice(-20);
 
-        // 注入记忆上下文
+        // 注入记忆上下文 + 知识边界
         const memoryContext = ctx.childId ? store.getMemoryContext(ctx.childId) : '';
+        const concept = detectConcept(data.text);
+        const knowledgeBoundary = concept && ctx.childAge
+          ? getKnowledgeBoundary(concept, ctx.childAge) : undefined;
+
+        if (knowledgeBoundary) console.log(`[knowledge] concept: ${concept} | boundary applied`);
 
         let fullReply = '';
         for await (const chunk of chatStream(recentMessages, {
           childAge: ctx.childAge,
           childName: ctx.childName,
           memoryContext: memoryContext || undefined,
+          knowledgeBoundary: knowledgeBoundary || undefined,
         })) {
           fullReply += chunk;
         }

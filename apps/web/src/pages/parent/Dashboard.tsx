@@ -51,8 +51,15 @@ const TREND_ICON: Record<string, string> = {
   declining: '📉',
 };
 
-export function ParentDashboard() {
+interface Props {
+  parentId: string;
+  token: string;
+  onBack: () => void;
+}
+
+export function ParentDashboard({ parentId, token, onBack }: Props) {
   const [childId, setChildId] = useState<string>('');
+  const [childName, setChildName] = useState<string>('');
   const [radar, setRadar] = useState<RadarData | null>(null);
   const [baselines, setBaselines] = useState<Baseline[]>([]);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
@@ -60,15 +67,20 @@ export function ParentDashboard() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 获取演示孩子 ID
+  // 获取家长的孩子列表
   useEffect(() => {
-    fetch('/api/demo/child')
+    fetch(`/api/parents/${parentId}/children`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((r) => r.json())
       .then((data) => {
-        if (data.child?.id) setChildId(data.child.id);
+        if (data.children?.[0]) {
+          setChildId(data.children[0].id);
+          setChildName(data.children[0].nickname);
+        }
       })
       .catch(console.error);
-  }, []);
+  }, [parentId, token]);
 
   // 加载数据
   useEffect(() => {
@@ -103,8 +115,16 @@ export function ParentDashboard() {
       background: '#F5F7FA', fontFamily: '-apple-system, sans-serif',
       maxWidth: 480, margin: '0 auto',
     }}>
-      <h1 style={{ fontSize: 22, color: '#333', marginBottom: 4 }}>呜哩成长仪表盘</h1>
-      <p style={{ fontSize: 13, color: '#999', marginBottom: 20 }}>小宇的 4C 能力追踪</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+        <button onClick={onBack} style={{
+          padding: '6px 12px', borderRadius: 16, border: 'none',
+          background: 'rgba(0,0,0,0.05)', fontSize: 13, cursor: 'pointer',
+        }}>
+          ← 返回
+        </button>
+        <h1 style={{ fontSize: 22, color: '#333' }}>呜哩成长仪表盘</h1>
+      </div>
+      <p style={{ fontSize: 13, color: '#999', marginBottom: 20 }}>{childName || '孩子'}的 4C 能力追踪</p>
 
       {loading && <div style={{ textAlign: 'center', color: '#999', padding: 40 }}>加载中...</div>}
 
