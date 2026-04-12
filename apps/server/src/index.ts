@@ -75,7 +75,7 @@ async function main() {
 
     const token = createToken(parent.id);
     console.log(`[auth] registered: ${phone} → child: ${child.nickname}`);
-    return { token, parentId: parent.id, childId: child.id };
+    return { token, parentId: parent.id, childId: child.id, childName: child.nickname };
   });
 
   // 登录
@@ -90,8 +90,10 @@ async function main() {
     if (!match) return { error: '密码错误' };
 
     const token = createToken(parent.id);
+    const children = store.getChildrenByParent(parent.id);
+    const child = children[0];
     console.log(`[auth] login: ${phone}`);
-    return { token, parentId: parent.id };
+    return { token, parentId: parent.id, childId: child?.id, childName: child?.nickname };
   });
 
   // 获取家长的孩子列表

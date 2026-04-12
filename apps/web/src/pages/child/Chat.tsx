@@ -10,6 +10,9 @@ interface ChatMessage {
 }
 
 interface Props {
+  childId: string;
+  childName: string;
+  token: string;
   onBack: () => void;
 }
 
@@ -30,7 +33,7 @@ function speak(text: string) {
   window.speechSynthesis.speak(utterance);
 }
 
-export function ChildChat({ onBack }: Props) {
+export function ChildChat({ childId, childName, token, onBack }: Props) {
   const [connected, setConnected] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
   const [uliAnimation, setUliAnimation] = useState('idle');
@@ -155,7 +158,7 @@ export function ChildChat({ onBack }: Props) {
     const socket = socketRef.current;
     if (!socket || !connected) return;
     if (sessionActive) socket.emit('end_session');
-    else socket.emit('start_session');
+    else socket.emit('start_session', { childId, childName });
   };
 
   // 动画表情映射
