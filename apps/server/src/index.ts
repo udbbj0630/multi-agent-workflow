@@ -25,22 +25,9 @@ const sessionContexts = new Map<string, {
   childTexts: string[]; // 孩子说的所有话，用于测评
 }>();
 
-// ============ 演示数据：默认创建一个家长和孩子 ============
+// ============ 演示数据：首次运行创建，之后复用 ============
 
-const DEMO_PARENT = store.createParent({
-  phone: '13800000000',
-  passwordHash: '$2a$10$demo',
-  nickname: '演示家长',
-});
-
-const DEMO_CHILD = store.createChild({
-  parentId: DEMO_PARENT.id,
-  nickname: '小宇',
-  birthDate: '2020-06-15',
-  gender: 'male',
-});
-
-console.log(`[demo] parent: ${DEMO_PARENT.id} | child: ${DEMO_CHILD.id} (${DEMO_CHILD.nickname})`);
+const { parent: DEMO_PARENT, child: DEMO_CHILD } = store.ensureDemoData();
 
 async function main() {
   const fastify = Fastify({ logger: true });
