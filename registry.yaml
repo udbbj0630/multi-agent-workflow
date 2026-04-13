@@ -1,0 +1,56 @@
+# Workflow Registry - 单一事实来源
+# 由 Agent 自动维护，每个阶段结束后更新
+
+task_id: ""
+task_description: ""
+level: ""  # L0 / L1 / L2 / L3
+status: "init"  # init / spec / challenge / lock / execute / handoff / review / decision / passed / revising
+iteration: 1
+max_iterations: 3
+created_at: ""
+updated_at: ""
+
+# 工件路径与版本
+artifacts:
+  spec_pack:
+    file: ""
+    version: 0
+  understanding_locks:
+    codex:
+      file: ""
+      version: 0
+      status: ""  # pending / confirmed / rework
+    gemini:
+      file: ""
+      version: 0
+      status: ""
+  evidence_handoff:
+    file: ""
+    version: 0
+  review:
+    file: ""
+    version: 0
+  decision:
+    file: ""
+    version: 0
+    result: ""  # PASS / REVISE / REDO
+  revision_brief:
+    file: ""
+    version: 0
+
+# Prompt 模板版本追踪
+prompt_versions:
+  spec_pack_template: ""
+  understanding_lock_template: ""
+  evidence_handoff_template: ""
+  revision_brief_template: ""
+  codex_execute_prompt: ""
+  gemini_execute_prompt: ""
+  review_prompt: ""
+  decision_prompt: ""
+
+# L0 快速记录
+quick_log: []
+  # - date: "YYYY-MM-DD"
+  #   change: "改了什么"
+  #   reason: "为什么改"
