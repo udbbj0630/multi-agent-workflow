@@ -1,0 +1,193 @@
+{
+  "_meta": {
+    "source": "CHILDES Chinese Mandarin (IPA-CHILDES)",
+    "description": "Age-normed baseline metrics for 4C assessment scoring",
+    "metrics": {
+      "mlu": "Mean Length of Utterance in Chinese chars — Communication proxy",
+      "ttr": "Type-Token Ratio — Creativity (vocabulary diversity) proxy",
+      "question_ratio": "Question frequency — Critical Thinking proxy",
+      "causal_ratio": "Causal language frequency — Critical Thinking proxy",
+      "emotion_word_ratio": "Emotion word frequency — Communication proxy",
+      "unique_words_per_utt": "Unique words per utterance — Creativity proxy"
+    }
+  },
+  "norms": {
+    "age3": {
+      "mlu": 4.22,
+      "ttr": 0.0327,
+      "question_ratio": 0.0862,
+      "causal_ratio": 0.0092,
+      "emotion_word_ratio": 0.0752,
+      "unique_words_per_utt": 0.11,
+      "utterance_count": 37887
+    },
+    "age4": {
+      "mlu": 4.85,
+      "ttr": 0.0401,
+      "question_ratio": 0.0807,
+      "causal_ratio": 0.0137,
+      "emotion_word_ratio": 0.0769,
+      "unique_words_per_utt": 0.15,
+      "utterance_count": 21462
+    },
+    "age5": {
+      "mlu": 5.62,
+      "ttr": 0.0266,
+      "question_ratio": 0.0647,
+      "causal_ratio": 0.0207,
+      "emotion_word_ratio": 0.086,
+      "unique_words_per_utt": 0.11,
+      "utterance_count": 31762
+    },
+    "age6": {
+      "mlu": 6.72,
+      "ttr": 0.0249,
+      "question_ratio": 0.0466,
+      "causal_ratio": 0.0251,
+      "emotion_word_ratio": 0.1063,
+      "unique_words_per_utt": 0.12,
+      "utterance_count": 23882
+    },
+    "age7": {
+      "mlu": 7.41,
+      "ttr": 0.0409,
+      "question_ratio": 0.0428,
+      "causal_ratio": 0.0328,
+      "emotion_word_ratio": 0.1158,
+      "unique_words_per_utt": 0.22,
+      "utterance_count": 9121
+    }
+  },
+  "scoring_guide": {
+    "mlu": {
+      "overall_mean": 5.764,
+      "overall_std": 0.7975,
+      "by_age": {
+        "age3": {
+          "mean": 4.22,
+          "std": 0.638
+        },
+        "age4": {
+          "mean": 4.85,
+          "std": 0.638
+        },
+        "age5": {
+          "mean": 5.62,
+          "std": 0.638
+        },
+        "age6": {
+          "mean": 6.72,
+          "std": 0.638
+        },
+        "age7": {
+          "mean": 7.41,
+          "std": 0.638
+        }
+      }
+    },
+    "ttr": {
+      "overall_mean": 0.033,
+      "overall_std": 0.004,
+      "by_age": {
+        "age3": {
+          "mean": 0.0327,
+          "std": 0.0032
+        },
+        "age4": {
+          "mean": 0.0401,
+          "std": 0.0032
+        },
+        "age5": {
+          "mean": 0.0266,
+          "std": 0.0032
+        },
+        "age6": {
+          "mean": 0.0249,
+          "std": 0.0032
+        },
+        "age7": {
+          "mean": 0.0409,
+          "std": 0.0032
+        }
+      }
+    },
+    "question_ratio": {
+      "overall_mean": 0.0642,
+      "overall_std": 0.0109,
+      "by_age": {
+        "age3": {
+          "mean": 0.0862,
+          "std": 0.0087
+        },
+        "age4": {
+          "mean": 0.0807,
+          "std": 0.0087
+        },
+        "age5": {
+          "mean": 0.0647,
+          "std": 0.0087
+        },
+        "age6": {
+          "mean": 0.0466,
+          "std": 0.0087
+        },
+        "age7": {
+          "mean": 0.0428,
+          "std": 0.0087
+        }
+      }
+    },
+    "causal_ratio": {
+      "overall_mean": 0.0203,
+      "overall_std": 0.0059,
+      "by_age": {
+        "age3": {
+          "mean": 0.0092,
+          "std": 0.0047
+        },
+        "age4": {
+          "mean": 0.0137,
+          "std": 0.0047
+        },
+        "age5": {
+          "mean": 0.0207,
+          "std": 0.0047
+        },
+        "age6": {
+          "mean": 0.0251,
+          "std": 0.0047
+        },
+        "age7": {
+          "mean": 0.0328,
+          "std": 0.0047
+        }
+      }
+    },
+    "emotion_word_ratio": {
+      "overall_mean": 0.092,
+      "overall_std": 0.0101,
+      "by_age": {
+        "age3": {
+          "mean": 0.0752,
+          "std": 0.0081
+        },
+        "age4": {
+          "mean": 0.0769,
+          "std": 0.0081
+        },
+        "age5": {
+          "mean": 0.086,
+          "std": 0.0081
+        },
+        "age6": {
+          "mean": 0.1063,
+          "std": 0.0081
+        },
+        "age7": {
+          "mean": 0.1158,
+          "std": 0.0081
+        }
+      }
+    }
+  }
+}

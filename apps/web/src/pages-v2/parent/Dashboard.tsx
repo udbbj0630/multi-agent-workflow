@@ -111,7 +111,6 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
     const load = async () => {
       setLoading(true);
       setError("");
-      // Clear stale data immediately
       setBaseline(null);
       setTrend([]);
       setMilestones([]);
@@ -163,10 +162,10 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
   );
 
   const scoreCards = useMemo(() => [
-    { label: "创造力", value: baseline?.radar.creativity ?? 0, cls: "sunset" },
-    { label: "批判思维", value: baseline?.radar.criticalThinking ?? 0, cls: "cosmic" },
+    { label: "创造力", value: baseline?.radar.creativity ?? 0, cls: "amber" },
+    { label: "批判思维", value: baseline?.radar.criticalThinking ?? 0, cls: "forest" },
     { label: "沟通表达", value: baseline?.radar.communication ?? 0, cls: "leaf" },
-    { label: "协作力", value: baseline?.radar.collaboration ?? 0, cls: "star" },
+    { label: "协作力", value: baseline?.radar.collaboration ?? 0, cls: "honey" },
   ], [baseline]);
 
   const c1 = useCountUp(scoreCards[0].value);
@@ -178,10 +177,11 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
   const handleRetry = useCallback(() => setError(""), []);
 
   const tooltipStyle = {
-    background: "rgba(26,16,60,0.92)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(60,36,21,0.92)",
+    border: "1px solid rgba(232,108,90,0.2)",
     borderRadius: 14,
     color: "#fff",
+    fontFamily: "var(--font-body)",
   };
 
   return (
@@ -219,7 +219,6 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
         </div>
 
         <div className="dash-content">
-          {/* Error banner with retry */}
           {error && (
             <div className="dash-error-banner">
               <span>{error}</span>
@@ -229,7 +228,6 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
             </div>
           )}
 
-          {/* Empty children state */}
           {!loading && children.length === 0 && (
             <div className="dash-empty-state">
               <p>还没有孩子的记录</p>
@@ -243,11 +241,11 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
             <>
               {/* Score Grid */}
               <div className="score-grid-card">
-                <h3 className="section-title">能力星屑分布</h3>
+                <h3 className="section-title">能力树苗分布</h3>
                 <div className="score-grid">
                   {loading ? (
                     Array.from({ length: 4 }, (_, i) => (
-                      <div key={`sk-${i}`} className="score-pill skeleton">
+                      <div key={`sk-${i}`} className={`score-pill skeleton`}>
                         <div className="score-label" style={{ opacity: 0.3 }}>加载中</div>
                         <div className="score-value">--</div>
                       </div>
@@ -265,18 +263,18 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
 
               {/* Radar Chart */}
               <div className="constellation-card">
-                <h3 className="section-title">能力星象图</h3>
+                <h3 className="section-title">能力森林图</h3>
                 <div style={{ width: "100%", height: 280 }}>
                   {loading ? (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "rgba(255,255,255,0.4)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--f-text-muted)" }}>
                       加载中...
                     </div>
                   ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart outerRadius="72%" data={radarData}>
-                      <PolarGrid stroke="rgba(255,255,255,0.15)" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: "rgba(255,255,255,0.8)", fontSize: 12 }} />
-                      <Radar name="能力值" dataKey="value" stroke="#F9E2AF" fill="#B388FF" fillOpacity={0.35} />
+                      <PolarGrid stroke="rgba(60,36,21,0.1)" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: "var(--f-text-muted)", fontSize: 12 }} />
+                      <Radar name="能力值" dataKey="value" stroke="var(--f-amber)" fill="var(--f-canopy-light)" fillOpacity={0.25} />
                       <Tooltip contentStyle={tooltipStyle} />
                       <Legend />
                     </RadarChart>
@@ -290,7 +288,7 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
                 <h3 className="section-title">本周成长趋势</h3>
                 <div style={{ height: 260 }}>
                   {loading ? (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "rgba(255,255,255,0.4)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--f-text-muted)" }}>
                       加载中...
                     </div>
                   ) : (
@@ -298,31 +296,31 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
                     <AreaChart data={trend}>
                       <defs>
                         <linearGradient id="gCreativity" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF7E67" stopOpacity={0.6} />
-                          <stop offset="95%" stopColor="#FF7E67" stopOpacity={0.02} />
+                          <stop offset="5%" stopColor="#D4881C" stopOpacity={0.5} />
+                          <stop offset="95%" stopColor="#D4881C" stopOpacity={0.02} />
                         </linearGradient>
                         <linearGradient id="gCritical" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#B388FF" stopOpacity={0.6} />
-                          <stop offset="95%" stopColor="#B388FF" stopOpacity={0.02} />
+                          <stop offset="5%" stopColor="#2D7A3A" stopOpacity={0.5} />
+                          <stop offset="95%" stopColor="#2D7A3A" stopOpacity={0.02} />
                         </linearGradient>
                         <linearGradient id="gCommunication" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#81C784" stopOpacity={0.6} />
+                          <stop offset="5%" stopColor="#81C784" stopOpacity={0.5} />
                           <stop offset="95%" stopColor="#81C784" stopOpacity={0.02} />
                         </linearGradient>
                         <linearGradient id="gCollaboration" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#F9E2AF" stopOpacity={0.6} />
-                          <stop offset="95%" stopColor="#F9E2AF" stopOpacity={0.02} />
+                          <stop offset="5%" stopColor="#F5B041" stopOpacity={0.5} />
+                          <stop offset="95%" stopColor="#F5B041" stopOpacity={0.02} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                      <XAxis dataKey="date" tickFormatter={formatDate} stroke="rgba(255,255,255,0.3)" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} />
-                      <YAxis domain={[0, 100]} stroke="rgba(255,255,255,0.3)" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(60,36,21,0.06)" />
+                      <XAxis dataKey="date" tickFormatter={formatDate} stroke="rgba(60,36,21,0.2)" tick={{ fill: "var(--f-text-muted)", fontSize: 11 }} />
+                      <YAxis domain={[0, 100]} stroke="rgba(60,36,21,0.2)" tick={{ fill: "var(--f-text-muted)", fontSize: 11 }} />
                       <Tooltip labelFormatter={(v) => formatDate(String(v))} contentStyle={tooltipStyle} />
                       <Legend />
-                      <Area type="monotone" dataKey="creativity" stroke="#FF7E67" fill="url(#gCreativity)" strokeWidth={2} name="创造力" />
-                      <Area type="monotone" dataKey="criticalThinking" stroke="#B388FF" fill="url(#gCritical)" strokeWidth={2} name="批判思维" />
+                      <Area type="monotone" dataKey="creativity" stroke="#D4881C" fill="url(#gCreativity)" strokeWidth={2} name="创造力" />
+                      <Area type="monotone" dataKey="criticalThinking" stroke="#2D7A3A" fill="url(#gCritical)" strokeWidth={2} name="批判思维" />
                       <Area type="monotone" dataKey="communication" stroke="#81C784" fill="url(#gCommunication)" strokeWidth={2} name="沟通表达" />
-                      <Area type="monotone" dataKey="collaboration" stroke="#F9E2AF" fill="url(#gCollaboration)" strokeWidth={2} name="协作力" />
+                      <Area type="monotone" dataKey="collaboration" stroke="#F5B041" fill="url(#gCollaboration)" strokeWidth={2} name="协作力" />
                     </AreaChart>
                   </ResponsiveContainer>
                   )}
@@ -331,25 +329,28 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
 
               {/* Milestones */}
               <div className="milestone-card">
-                <h3 className="section-title" style={{ color: "#fff" }}>里程碑</h3>
+                <h3 className="section-title" style={{ color: "var(--f-honey)" }}>里程碑</h3>
                 {milestones.length > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     {milestones.map((ms, i) => (
                       <div key={i}>
                         <div className="milestone-badge">
-                          🏆 {ms.dimension} · {ms.eventType}
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ verticalAlign: -2, marginRight: 4 }}>
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                          </svg>
+                          {ms.dimension} · {ms.eventType}
                         </div>
-                        <div style={{ color: "rgba(255,255,255,0.92)", lineHeight: 1.6 }}>
+                        <div style={{ color: "rgba(255,253,245,0.9)", lineHeight: 1.6 }}>
                           {ms.description}
                         </div>
-                        <div style={{ marginTop: 4, color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+                        <div style={{ marginTop: 4, color: "rgba(255,253,245,0.5)", fontSize: 13 }}>
                           {formatDate(ms.triggeredAt)}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div style={{ color: "rgba(255,255,255,0.78)" }}>
+                  <div style={{ color: "rgba(255,253,245,0.7)" }}>
                     这周还在悄悄酝酿新的小成就。
                   </div>
                 )}
@@ -362,19 +363,26 @@ const Dashboard: React.FC<Props> = ({ parentId, token, onBack, onLogout }) => {
                   {memories.length > 0 ? (
                     memories.map((m) => (
                       <div key={`${m.category}-${m.key}-${m.value}`} className="memory-tag">
-                        <span>☁️</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93z"/>
+                        </svg>
                         {m.value || m.key} · {m.mentionCount}
                       </div>
                     ))
                   ) : (
-                    <div className="memory-tag"><span>✨</span>还在收集今天的闪光片段</div>
+                    <div className="memory-tag">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                      还在收集今天的闪光片段
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Narrative */}
               <div className="narrative-card">
-                <h3 className="section-title" style={{ color: "var(--c-star-glow)" }}>成长来信</h3>
+                <h3 className="section-title" style={{ color: "var(--f-amber)" }}>成长来信</h3>
                 <div className="narrative-date">{new Date().toLocaleDateString("zh-CN")}</div>
                 <p className="narrative-text">
                   {narrative || "呜哩正在整理今天的观察，稍后会送来一封温柔的小信。"}

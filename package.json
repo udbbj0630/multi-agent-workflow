@@ -12,8 +12,10 @@
     "build": "turbo build",
     "dev:web": "turbo dev --filter=@uli/web",
     "dev:server": "turbo dev --filter=@uli/server",
+    "dev:brain": "turbo dev --filter=@uli/brain",
     "build:web": "turbo build --filter=@uli/web",
     "build:server": "turbo build --filter=@uli/server",
+    "build:brain": "turbo build --filter=@uli/brain",
     "db:migrate": "turbo db:migrate --filter=@uli/server",
     "lint": "turbo lint",
     "clean": "turbo clean"

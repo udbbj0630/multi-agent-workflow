@@ -1,5 +1,5 @@
 import React, { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import UliCharacter from "../components/UliCharacter";
+import ForestFox from "../components-v2/ForestFox";
 import Chat from "./child/Chat";
 import Dashboard from "./parent/Dashboard";
 
@@ -32,7 +32,7 @@ interface AuthFormState {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Shared helpers                                                     */
+/*  Shared helpers (same logic as v1)                                  */
 /* ------------------------------------------------------------------ */
 
 export const SESSION_KEY = "uli-session";
@@ -85,9 +85,7 @@ export async function apiFetch<T>(url: string, token: string, options?: RequestI
     try {
       const body = await res.json();
       message = body.error || body.message || message;
-    } catch {
-      // fallback to default
-    }
+    } catch { /* fallback */ }
     const err = new Error(message);
     (err as Error & { status?: number }).status = res.status;
     throw err;
@@ -96,24 +94,71 @@ export async function apiFetch<T>(url: string, token: string, options?: RequestI
   return (await res.json()) as T;
 }
 
-function createStars(count: number, prefix: string): JSX.Element[] {
+/* ------------------------------------------------------------------ */
+/*  Firefly particles                                                  */
+/* ------------------------------------------------------------------ */
+
+function createFireflies(count: number, prefix: string): JSX.Element[] {
   return Array.from({ length: count }, (_, i) => {
-    const size = Math.random() * 3 + 1;
+    const size = Math.random() * 5 + 3;
     return (
       <span
         key={`${prefix}-${i}`}
-        className="star"
+        className="firefly"
         style={{
           width: size,
           height: size,
           left: `${Math.random() * 100}%`,
           top: `${Math.random() * 100}%`,
-          animationDelay: `${Math.random() * 2}s`,
-          animationDuration: `${Math.random() * 2 + 1.5}s`,
+          animationDelay: `${Math.random() * 4}s`,
+          animationDuration: `${Math.random() * 4 + 3}s`,
         }}
       />
     );
   });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Leaf decorations                                                   */
+/* ------------------------------------------------------------------ */
+
+function LeafDecorations() {
+  const leaves = useMemo(() => [
+    { top: "5%", left: "3%", size: 18, rotation: -25, delay: 0 },
+    { top: "15%", right: "5%", size: 14, rotation: 15, delay: 0.5 },
+    { bottom: "20%", left: "8%", size: 16, rotation: -10, delay: 1 },
+    { bottom: "10%", right: "10%", size: 12, rotation: 20, delay: 1.5 },
+  ], []);
+
+  return (
+    <>
+      {leaves.map((leaf, i) => (
+        <svg
+          key={`leaf-${i}`}
+          className="leaf-particle"
+          style={{
+            position: "absolute",
+            ...(leaf.top ? { top: leaf.top } : {}),
+            ...(leaf.bottom ? { bottom: leaf.bottom } : {}),
+            ...(leaf.left ? { left: leaf.left } : {}),
+            ...(leaf.right ? { right: leaf.right } : {}),
+            width: leaf.size,
+            height: leaf.size,
+            transform: `rotate(${leaf.rotation}deg)`,
+            animationDelay: `${leaf.delay}s`,
+            zIndex: 1,
+          }}
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20c4 0 8.5-3 10.36-7.86A8.18 8.18 0 0021 8a1 1 0 00-1-1c-1 0-2 .1-3 1z"
+            fill="#81C784"
+            opacity={0.6}
+          />
+        </svg>
+      ))}
+    </>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -146,7 +191,7 @@ const Welcome: React.FC<WelcomeProps> = ({
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const stars = useMemo(() => createStars(40, "w"), []);
+  const fireflies = useMemo(() => createFireflies(18, "w"), []);
 
   const updateField = useCallback((field: keyof AuthFormState, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -226,7 +271,8 @@ const Welcome: React.FC<WelcomeProps> = ({
   if (page !== "choose") {
     return (
       <>
-        <div className="star-layer">{stars}</div>
+        <div className="firefly-layer">{fireflies}</div>
+        <LeafDecorations />
         <section className="page page-login active">
           <div
             style={{
@@ -240,7 +286,7 @@ const Welcome: React.FC<WelcomeProps> = ({
           >
             <form className="portal-form page-enter" onSubmit={handleSubmit}>
               <div className="portal-uli-wrap">
-                <UliCharacter mood={page === "register" ? "wave" : "idle"} size={120} />
+                <ForestFox mood={page === "register" ? "wave" : "idle"} size={120} />
               </div>
 
               <h1 className="portal-title">
@@ -253,7 +299,7 @@ const Welcome: React.FC<WelcomeProps> = ({
               </p>
 
               <input
-                className="input-organic"
+                className="input-forest"
                 type="tel"
                 inputMode="numeric"
                 placeholder="家长手机号"
@@ -265,9 +311,9 @@ const Welcome: React.FC<WelcomeProps> = ({
                 autoComplete="tel"
                 required
               />
-              {fieldErrors.phone && <div style={{ color: "#ffd8d0", fontSize: 13, marginTop: -10 }}>{fieldErrors.phone}</div>}
+              {fieldErrors.phone && <div style={{ color: "var(--f-mushroom)", fontSize: 13, marginTop: -8 }}>{fieldErrors.phone}</div>}
               <input
-                className="input-organic"
+                className="input-forest"
                 type="password"
                 placeholder="密码（至少8位）"
                 aria-label="密码"
@@ -278,12 +324,12 @@ const Welcome: React.FC<WelcomeProps> = ({
                 autoComplete={page === "login" ? "current-password" : "new-password"}
                 required
               />
-              {fieldErrors.password && <div style={{ color: "#ffd8d0", fontSize: 13, marginTop: -10 }}>{fieldErrors.password}</div>}
+              {fieldErrors.password && <div style={{ color: "var(--f-mushroom)", fontSize: 13, marginTop: -8 }}>{fieldErrors.password}</div>}
 
               {page === "register" && (
                 <>
                   <input
-                    className="input-organic"
+                    className="input-forest"
                     type="text"
                     placeholder="孩子昵称"
                     aria-label="孩子昵称"
@@ -293,7 +339,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                   />
                   <div style={{ position: "relative" }}>
                     <input
-                      className="input-organic"
+                      className="input-forest"
                       type="date"
                       max={new Date().toISOString().split("T")[0]}
                       min="2010-01-01"
@@ -306,10 +352,10 @@ const Welcome: React.FC<WelcomeProps> = ({
                       <span
                         style={{
                           position: "absolute",
-                          left: 22,
+                          left: 18,
                           top: "50%",
                           transform: "translateY(-50%)",
-                          color: "rgba(255,255,255,0.5)",
+                          color: "var(--f-bark-light)",
                           pointerEvents: "none",
                           fontSize: "1rem",
                         }}
@@ -325,7 +371,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                 <div className="auth-error">{error}</div>
               )}
 
-              <button className="btn-magic" type="submit" disabled={loading}>
+              <button className="btn-mushroom" type="submit" disabled={loading}>
                 {loading
                   ? "登录中..."
                   : page === "login"
@@ -346,11 +392,11 @@ const Welcome: React.FC<WelcomeProps> = ({
 
               <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 4 }}>
                 <a href="/api/legal/privacy" target="_blank" rel="noopener noreferrer"
-                  style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, textDecoration: "underline" }}>
+                  style={{ fontSize: 12 }}>
                   隐私政策
                 </a>
                 <a href="/api/legal/terms" target="_blank" rel="noopener noreferrer"
-                  style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, textDecoration: "underline" }}>
+                  style={{ fontSize: 12 }}>
                   服务条款
                 </a>
               </div>
@@ -364,14 +410,15 @@ const Welcome: React.FC<WelcomeProps> = ({
   /* ---- Choose Mode ---- */
   return (
     <>
-      <div className="star-layer">{stars}</div>
+      <div className="firefly-layer">{fireflies}</div>
+      <LeafDecorations />
       <section className="page page-select active">
         <div className="select-header page-enter">
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
-            <UliCharacter mood="happy" size={132} />
+            <ForestFox mood="happy" size={132} />
           </div>
-          <h1>今天我们要去哪儿？</h1>
-          <p>{childDisplayName} 的宇宙花园已经亮起来了</p>
+          <h1>今天去森林的哪一边？</h1>
+          <p>{childDisplayName} 的魔法森林已经醒过来了</p>
         </div>
 
         <div className="path-container page-enter">
@@ -381,8 +428,12 @@ const Welcome: React.FC<WelcomeProps> = ({
             onClick={onChildMode}
             style={{ appearance: "none", width: "100%" }}
           >
-            <div className="path-deco" />
-            <div className="path-icon-circle">☀️</div>
+            <div className="path-icon-circle">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="5" fill="#F5B041" />
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="#F5B041" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
             <h2>去玩耍</h2>
             <p>和呜哩聊天、听故事、把今天的小想法种进花园里</p>
           </button>
@@ -393,8 +444,11 @@ const Welcome: React.FC<WelcomeProps> = ({
             onClick={onParentMode}
             style={{ appearance: "none", width: "100%" }}
           >
-            <div className="path-deco" />
-            <div className="path-icon-circle" style={{ background: "rgba(255,255,255,0.14)" }}>🌌</div>
+            <div className="path-icon-circle" style={{ background: "rgba(45,122,58,0.1)", borderColor: "rgba(45,122,58,0.15)" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#2D7A3A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
             <h2>去观测</h2>
             <p>查看成长星图、里程碑与呜哩记录下来的闪光记忆</p>
           </button>
@@ -423,7 +477,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ childName, route, onChildMode, onParentMode, onLogout }) => (
   <aside className="sidebar">
     <div className="sidebar-brand">
-      <UliCharacter mood="idle" size={64} />
+      <ForestFox mood="idle" size={64} />
       <div className="sidebar-brand-name">呜哩 Uli</div>
     </div>
 
@@ -433,7 +487,12 @@ const Sidebar: React.FC<SidebarProps> = ({ childName, route, onChildMode, onPare
         className={`sidebar-nav-btn ${route === "child" ? "active" : ""}`}
         onClick={onChildMode}
       >
-        <span className="sidebar-nav-icon">☀️</span>
+        <span className="sidebar-nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.6"/>
+            <path d="M12 2v2M12 20v2M2 12h2M20 12h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </span>
         去玩耍
       </button>
       <button
@@ -441,7 +500,11 @@ const Sidebar: React.FC<SidebarProps> = ({ childName, route, onChildMode, onPare
         className={`sidebar-nav-btn ${route === "parent" ? "active" : ""}`}
         onClick={onParentMode}
       >
-        <span className="sidebar-nav-icon">🌌</span>
+        <span className="sidebar-nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
         去观测
       </button>
     </nav>
@@ -480,7 +543,6 @@ export function App(): JSX.Element {
 
   const isDesktop = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
 
-  // Not logged in → full-screen welcome, no sidebar
   if (!session) {
     return (
       <div className="app-shell">
@@ -497,7 +559,6 @@ export function App(): JSX.Element {
     );
   }
 
-  // Logged in + on desktop: sidebar layout (always, including welcome/choose)
   if (isDesktop) {
     return (
       <div className="app-shell app-shell--desktop">
@@ -538,7 +599,6 @@ export function App(): JSX.Element {
     );
   }
 
-  // Logged in + mobile: full-screen, no sidebar
   return (
     <div className="app-shell">
       <div className="main-content">

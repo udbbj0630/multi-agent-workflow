@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { io, Socket } from "socket.io-client";
-import UliCharacter from "../../components/UliCharacter";
+import ForestFox from "../../components-v2/ForestFox";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -21,7 +21,7 @@ interface Props {
   onLogout: () => void;
 }
 
-type UliMood = "idle" | "thinking" | "talking" | "happy" | "wave" | "giggle";
+type FoxMood = "idle" | "thinking" | "talking" | "happy" | "wave" | "giggle";
 
 interface ChatMessage {
   id: string;
@@ -55,26 +55,26 @@ interface SpeechRecognitionLike extends EventTarget {
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-function mapMood(animation?: string): UliMood {
+function mapMood(animation?: string): FoxMood {
   if (["thinking", "talking", "happy", "wave", "giggle", "idle"].includes(animation || "")) {
-    return animation as UliMood;
+    return animation as FoxMood;
   }
   return "idle";
 }
 
-function createStars(count: number): JSX.Element[] {
+function createFireflies(count: number): JSX.Element[] {
   return Array.from({ length: count }, (_, i) => {
-    const size = Math.random() * 3 + 1;
+    const size = Math.random() * 4 + 2;
     return (
       <span
-        key={`cs-${i}`}
-        className="star"
+        key={`cf-${i}`}
+        className="firefly"
         style={{
           width: size, height: size,
           left: `${Math.random() * 100}%`,
           top: `${Math.random() * 100}%`,
-          animationDelay: `${Math.random() * 2}s`,
-          animationDuration: `${Math.random() * 2 + 1.5}s`,
+          animationDelay: `${Math.random() * 3}s`,
+          animationDuration: `${Math.random() * 4 + 3}s`,
         }}
       />
     );
@@ -92,7 +92,7 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
   const [connecting, setConnecting] = useState(true);
   const [thinking, setThinking] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [mood, setMood] = useState<UliMood>("idle");
+  const [mood, setMood] = useState<FoxMood>("idle");
   const [error, setError] = useState("");
   const [disconnected, setDisconnected] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
@@ -102,7 +102,7 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const msgEndRef = useRef<HTMLDivElement | null>(null);
   const thinkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stars = useMemo(() => createStars(26), []);
+  const fireflies = useMemo(() => createFireflies(14), []);
 
   const addMessage = useCallback((sender: ChatMessage["sender"], text: string) => {
     if (!text.trim()) return;
@@ -316,7 +316,7 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
     }
   }, [sessionActive, recording]);
 
-  const handleTapUli = useCallback(() => {
+  const handleTapFox = useCallback(() => {
     socketRef.current?.emit("tap_uli");
     setMood("giggle");
     setTimeout(() => setMood("idle"), 1000);
@@ -327,16 +327,19 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
     handleSend(input);
   };
 
-  // ---- Disconnected overlay ----
   const showExpiredOverlay = disconnected && error.includes("过期");
 
   return (
     <>
       <section className="page page-child active" style={{ position: "relative" }}>
-        <div className="star-layer">{stars}</div>
+        <div className="firefly-layer">{fireflies}</div>
 
         {/* Header */}
-        <button type="button" className="btn-close-chat" onClick={onBack} aria-label="返回">✕</button>
+        <button type="button" className="btn-close-chat" onClick={onBack} aria-label="返回">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
 
         <div className="session-toggle">
           {sessionActive ? (
@@ -359,11 +362,10 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
             <div className="chat-overlay-box">
               <p>确定要结束这次对话吗？</p>
               <div style={{ display: "flex", gap: 12 }}>
-                <button type="button" className="btn-ghost" onClick={cancelEndSession}
-                  style={{ padding: "10px 24px", borderRadius: 999, color: "white" }}>
+                <button type="button" className="btn-ghost" onClick={cancelEndSession}>
                   继续聊
                 </button>
-                <button type="button" className="btn-magic" onClick={confirmEndSession}
+                <button type="button" className="btn-mushroom" onClick={confirmEndSession}
                   style={{ minHeight: 44, padding: "10px 24px" }}>
                   结束
                 </button>
@@ -375,14 +377,14 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
         {/* Character + messages */}
         <div className="chat-sky" style={{ flexDirection: "column", gap: 12, paddingInline: 16 }}>
           <div style={{ marginTop: 54, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 3 }}>
-            <UliCharacter mood={thinking ? "thinking" : mood} size={sessionActive ? 80 : 160} onClick={handleTapUli} />
+            <ForestFox mood={thinking ? "thinking" : mood} size={sessionActive ? 80 : 160} onClick={handleTapFox} />
             {!sessionActive && (
-              <div style={{ marginTop: 12, color: "white", fontWeight: 700, textShadow: "0 4px 14px rgba(26,16,60,0.25)" }}>
+              <div style={{ marginTop: 12, color: "var(--f-trunk)", fontWeight: 700, fontFamily: "var(--font-display)", fontSize: 18 }}>
                 呀，{childName} 来啦
               </div>
             )}
             {thinking && (
-              <div className="recording-indicator" style={{ marginTop: 12, background: "rgba(26,16,60,0.35)" }}>
+              <div className="recording-indicator" style={{ marginTop: 12 }}>
                 <span>{thinkingHint || "呜哩在认真想..."}</span>
                 <div className="sound-wave" aria-hidden="true"><span /><span /><span /><span /><span /></div>
               </div>
@@ -400,13 +402,21 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
                     style={{
                       alignSelf: isSystem ? "center" : isChild ? "flex-end" : "flex-start",
                       maxWidth: "82%",
-                      background: isSystem ? "rgba(255,255,255,0.18)" : isChild ? "rgba(255,160,122,0.92)" : "rgba(255,255,255,0.95)",
-                      color: isChild ? "#2f1b16" : isSystem ? "#fff" : "var(--c-text-main)",
-                      border: isChild ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255,126,103,0.2)",
-                      borderRadius: 24,
+                      background: isSystem
+                        ? "rgba(107,66,38,0.06)"
+                        : isChild
+                          ? "linear-gradient(135deg, #F5B041 0%, #D4881C 100%)"
+                          : "var(--f-cream)",
+                      color: isChild ? "#3C2415" : isSystem ? "var(--f-text-muted)" : "var(--f-text)",
+                      border: isChild
+                        ? "2px solid rgba(212,136,28,0.3)"
+                        : "var(--border-clay)",
+                      borderRadius: isSystem ? 12 : isChild ? "20px 20px 4px 20px" : "20px 20px 20px 4px",
                       padding: "12px 16px",
-                      boxShadow: "var(--shadow-organic)",
-                      backdropFilter: "blur(8px)",
+                      boxShadow: "var(--shadow-soft)",
+                      fontFamily: "var(--font-body)",
+                      fontSize: 15,
+                      lineHeight: 1.5,
                     }}
                   >
                     {msg.text}
@@ -435,7 +445,7 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
           <div className="chat-overlay">
             <div className="chat-overlay-box">
               <p>登录已过期</p>
-              <button type="button" className="btn-magic" onClick={onLogout}>
+              <button type="button" className="btn-mushroom" onClick={onLogout}>
                 重新登录
               </button>
             </div>
@@ -463,7 +473,7 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
             )}
             <button
               type="button"
-              className={`mic-flower ${recording ? "recording" : ""}`}
+              className={`btn-leaf-mic ${recording ? "recording" : ""}`}
               onClick={handleMicClick}
               aria-label="语音输入"
               disabled={!sessionActive}
@@ -474,9 +484,8 @@ const Chat: React.FC<Props> = ({ childId, childName, token, onBack, onLogout }) 
             </button>
             <button
               type="submit"
-              className="btn-magic"
+              className="btn-send-forest"
               disabled={!sessionActive || !input.trim()}
-              style={{ minHeight: 48, padding: "12px 20px" }}
             >
               发送
             </button>

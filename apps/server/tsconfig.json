@@ -9,5 +9,5 @@
     }
   },
   "include": ["src"],
-  "references": [{ "path": "../../packages/shared" }]
+  "exclude": ["src/db"]
 }

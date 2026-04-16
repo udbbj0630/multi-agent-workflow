@@ -15,10 +15,8 @@ interface KnowledgeLevel {
 interface KnowledgeTree {
   concept: string;
   levels: KnowledgeLevel[];
-  boundaryMessage: string; // 超出边界时呜哩说的话
+  boundaryMessage: string;
 }
-
-// ============ 知识库（首批） ============
 
 const knowledgeDB: KnowledgeTree[] = [
   {
@@ -68,33 +66,32 @@ const knowledgeDB: KnowledgeTree[] = [
   },
 ];
 
-// ============ 查询接口 ============
-
 /**
  * 根据概念和孩子年龄，获取知识边界约束
  * 返回给 LLM 的 prompt 片段
  */
 export function getKnowledgeBoundary(concept: string, childAge: number): string | null {
-  // 模糊匹配概念
-  const tree = knowledgeDB.find((t) =>
-    t.concept === concept || concept.includes(t.concept) || t.concept.includes(concept),
+  const tree = knowledgeDB.find((item) =>
+    item.concept === concept || concept.includes(item.concept) || item.concept.includes(concept),
   );
 
   if (!tree) return null;
 
-  // 找到孩子年龄对应的层级
-  const allowedLevel = tree.levels.filter((l) => childAge >= l.minAge && childAge <= l.maxAge)
-    .reduce((max, l) => (l.level > max.level ? l : max), { level: 0, minAge: 0, maxAge: 0, points: [] as string[] });
+  const allowedLevel = tree.levels
+    .filter((level) => childAge >= level.minAge && childAge <= level.maxAge)
+    .reduce(
+      (max, level) => (level.level > max.level ? level : max),
+      { level: 0, minAge: 0, maxAge: 0, points: [] as string[] },
+    );
 
   if (allowedLevel.level === 0) {
-    // 年龄太小，只能聊最基础的
-    const l1 = tree.levels[0];
-    return `关于"${tree.concept}"，这个孩子还小，只能说最基础的：${l1.points.join('、')}。不要说更复杂的。`;
+    const baseLevel = tree.levels[0];
+    return `关于"${tree.concept}"，这个孩子还小，只能说最基础的：${baseLevel.points.join('、')}。不要说更复杂的。`;
   }
 
   const allAllowedPoints = tree.levels
-    .filter((l) => l.level <= allowedLevel.level)
-    .flatMap((l) => l.points);
+    .filter((level) => level.level <= allowedLevel.level)
+    .flatMap((level) => level.points);
 
   return `关于"${tree.concept}"，这个${childAge}岁的孩子可以聊这些内容：${allAllowedPoints.join('、')}。` +
     `不要超出这个范围。如果孩子问了更深入的问题，就说："${tree.boundaryMessage}"`;
@@ -114,5 +111,49 @@ export function detectConcept(text: string): string | null {
  * 获取所有已知概念
  */
 export function getAllConcepts(): string[] {
-  return knowledgeDB.map((t) => t.concept);
+  return knowledgeDB.map((tree) => tree.concept);
+}
+
+export function getGuidedTopics(childAge: number, weakDimensions: string[]): string[] {
+  const topics: string[] = [];
+  const weakSet = new Set(weakDimensions);
+
+  if (weakSet.has('creativity')) {
+    topics.push(
+      childAge <= 5 ? '一起想象会飞的动物住在哪里' : '编一个“如果今天月亮掉进花园里”的故事',
+      '用玩具或小动物做角色扮演',
+    );
+  }
+
+  if (weakSet.has('critical_thinking') || weakSet.has('criticalThinking')) {
+    topics.push(
+      '聊聊“为什么会下雨/天会黑”这类因果问题',
+      childAge <= 5 ? '比较两个玩具哪里一样哪里不一样' : '猜一猜一件事情接下来会发生什么',
+    );
+  }
+
+  if (weakSet.has('communication')) {
+    topics.push(
+      '请孩子讲讲今天最开心或最不开心的一件事',
+      '一起回忆一件事情的先后顺序：先发生什么，后来呢',
+    );
+  }
+
+  if (weakSet.has('collaboration')) {
+    topics.push(
+      '一起商量怎么帮助一个难过的小动物朋友',
+      '玩轮流接话的小故事游戏',
+    );
+  }
+
+  if (topics.length === 0) {
+    topics.push(
+      '聊聊今天见到的人和发生的事',
+      '说说最喜欢的玩具或动物',
+      '一起编一个小冒险故事',
+    );
+  }
+
+  const uniqueTopics = [...new Set(topics)];
+  return uniqueTopics.slice(0, 5);
 }
